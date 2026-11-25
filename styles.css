@@ -128,19 +128,35 @@ h1 span {
 }
 
 .add-form {
-  display: flex;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) 180px;
   align-items: center;
-  gap: 13px;
+  gap: 14px;
   min-height: 76px;
   padding: 14px 18px 14px 22px;
   border-bottom: 1px solid var(--line);
 }
 
 .input-plus {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(109, 99, 232, 0.14);
   color: #8b82ee;
   font-size: 25px;
   font-weight: 400;
   line-height: 1;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.input-plus:hover {
+  transform: translateY(-1px);
+  background: rgba(109, 99, 232, 0.2);
 }
 
 .add-form input {
@@ -156,32 +172,18 @@ h1 span {
   color: #a7adb7;
 }
 
+#task-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .due-date-input {
-  flex: 0 0 auto;
-  width: 160px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 0;
   color: var(--muted);
-}
-
-.add-button {
-  flex: 0 0 auto;
-  padding: 10px 14px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--accent);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  transition: background 150ms ease, transform 150ms ease;
-}
-
-.add-button:hover {
-  transform: translateY(-1px);
-  background: #5e54d5;
-}
-
-.add-button span {
-  margin-left: 5px;
 }
 
 .list-toolbar {
@@ -273,93 +275,60 @@ h1 span {
   background: var(--danger);
 }
 
-.task-toggle {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
-  place-items: center;
-  padding: 0;
-  border: 1.5px solid #d5d9df;
-  border-radius: 50%;
-  background: #fff;
-  color: #fff;
-  transition: all 150ms ease;
+.task-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid rgba(171, 176, 186, 0.55);
+  background: transparent;
+  cursor: pointer;
 }
 
-.task-toggle:hover {
-  border-color: var(--accent);
-}
-
-.task-item.is-completed .task-toggle {
+.task-checkbox:checked {
   border-color: var(--accent);
   background: var(--accent);
 }
 
-.task-toggle svg {
-  width: 11px;
-  height: 11px;
-}
-
-.task-content {
-  display: flex;
+.task-details {
   flex: 1;
-  min-width: 0;
+  display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
+  min-width: 0;
 }
 
-.task-text {
+.task-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
   overflow-wrap: anywhere;
-  color: #424956;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
-.task-due-date {
-  color: #8b93a0;
+.task-date {
+  margin: 0;
   font-size: 11px;
-  line-height: 1.3;
+  color: #9299a5;
 }
 
-.task-item.is-overdue .task-due-date {
+.task-item.is-overdue .task-date {
   color: var(--danger);
 }
 
-.task-item.is-completed .task-text {
-  color: #a4a9b2;
+.task-item.is-completed .task-title {
   text-decoration: line-through;
   text-decoration-color: #c4c8ce;
-}
-
-.task-badge {
-  flex: 0 0 auto;
-  border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-
-.task-badge--overdue {
-  background: #fff0ef;
-  color: #b13c38;
+  color: #a7adb7;
 }
 
 .delete-button {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-  place-items: center;
+  padding: 8px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 10px;
   background: transparent;
-  color: #a5aab3;
-  font-size: 17px;
+  color: #a0a5b0;
   opacity: 0;
-  transition: background 150ms ease, color 150ms ease, opacity 150ms ease;
+  transition: background 150ms ease, opacity 150ms ease;
 }
 
 .task-item:hover .delete-button,
@@ -368,20 +337,24 @@ h1 span {
 }
 
 .delete-button:hover {
-  background: #fff0ef;
-  color: #d65b57;
+  background: rgba(224, 226, 230, 0.65);
 }
 
 .empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 100%;
   padding: 41px 20px 43px;
   text-align: center;
+  overflow-x: hidden;
 }
 
 .empty-icon {
   display: grid;
   width: 39px;
   height: 39px;
-  margin: 0 auto 12px;
+  margin: 0;
   place-items: center;
   border-radius: 12px;
   background: #f4f2ff;
@@ -397,38 +370,46 @@ h1 span {
 }
 
 .empty-copy {
-  margin: 6px 0 0;
+  margin: 0;
   color: #9aa0aa;
   font-size: 12px;
 }
 
 .list-footer {
   display: flex;
-  min-height: 52px;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 23px;
+  gap: 13px;
+  padding: 17px 23px;
   border-top: 1px solid var(--line);
 }
 
 .list-footer p {
   margin: 0;
-  color: #9299a5;
-  font-size: 11px;
+  color: #8c929f;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .clear-button {
-  padding: 5px 0 5px 8px;
   border: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
   background: transparent;
-  color: #8b82df;
+  color: var(--danger);
   font-size: 11px;
+  font-weight: 600;
+  transition: background 150ms ease;
 }
 
 .clear-button:hover {
-  color: #5e54d5;
-  text-decoration: underline;
+  background: rgba(214, 91, 87, 0.08);
 }
 
 .page-note {
@@ -474,36 +455,22 @@ h1 span {
   }
 
   .add-form {
-    flex-wrap: wrap;
+    grid-template-columns: 50px minmax(0, 1fr);
+    grid-auto-rows: auto;
     gap: 9px;
     min-height: 68px;
     padding: 12px 12px 12px 16px;
   }
 
-  .add-form input {
-    font-size: 13px;
-  }
-
   .due-date-input {
+    grid-column: 1 / -1;
     width: 100%;
+    min-width: 0;
     padding: 10px 0;
   }
 
-  .add-button {
-    padding: 10px 11px;
-    font-size: 11px;
-  }
-
-  .list-toolbar {
-    padding: 0 15px;
-  }
-
-  .filters {
-    gap: 0;
-  }
-
-  .filter-button {
-    padding: 6px 8px;
+  .add-form input {
+    font-size: 13px;
   }
 
   .task-list {

@@ -173,6 +173,34 @@ function saveAndRender() {
   render();
 }
 
+function getEmptyStateContent(filter, totalCount) {
+  if (totalCount === 0) {
+    return {
+      title: "No tasks yet",
+      copy: "Add your first task above to get started.",
+    };
+  }
+
+  if (filter === "active") {
+    return {
+      title: "Nothing to do",
+      copy: "You’re all caught up. Switch to All or Done to review your list.",
+    };
+  }
+
+  if (filter === "completed") {
+    return {
+      title: "No completed tasks",
+      copy: "Finish a task to see it show up here.",
+    };
+  }
+
+  return {
+    title: "No tasks",
+    copy: "Try adding a task above.",
+  };
+}
+
 function render() {
   const visibleTasks = tasks.filter((task) => {
     if (activeFilter === "active") return !task.completed;
@@ -184,11 +212,20 @@ function render() {
 
   taskTotal.textContent = String(tasks.length);
   remainingCount.textContent =
-    remaining === 0
-      ? "You’re all caught up ✨"
-      : `${remaining} ${remaining === 1 ? "task" : "tasks"} left to do`;
+    remaining === 0 ? "You’re all caught up ✨" : `${remaining} ${remaining === 1 ? "task" : "tasks"} left to do`;
   clearCompletedButton.hidden = completed === 0;
-  emptyState.hidden = visibleTasks.length !== 0;
+
+  const shouldShowEmpty = visibleTasks.length === 0;
+  emptyState.hidden = !shouldShowEmpty;
+
+  if (shouldShowEmpty) {
+    const { title, copy } = getEmptyStateContent(activeFilter, tasks.length);
+    const titleEl = emptyState.querySelector(".empty-title");
+    const copyEl = emptyState.querySelector(".empty-copy");
+    if (titleEl) titleEl.textContent = title;
+    if (copyEl) copyEl.textContent = copy;
+  }
+
   taskList.replaceChildren(...visibleTasks.map(createTaskElement));
 }
 
@@ -201,28 +238,26 @@ function createTaskElement(task) {
   item.className = `task-item${task.completed ? " is-completed" : ""}${overdue ? " is-overdue" : ""}`;
   item.dataset.taskId = task.id;
 
-  const toggleButton = document.createElement("button");
-  toggleButton.className = "task-toggle";
-  toggleButton.type = "button";
-  toggleButton.dataset.action = "toggle";
-  toggleButton.setAttribute("aria-label", `${task.completed ? "Mark as not done" : "Complete"}: ${task.text}`);
-  toggleButton.setAttribute("aria-pressed", String(task.completed));
-  toggleButton.innerHTML =
-    '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m3.5 8 3 3 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const toggle = document.createElement("input");
+  toggle.className = "task-checkbox";
+  toggle.type = "checkbox";
+  toggle.checked = task.completed;
+  toggle.dataset.action = "toggle";
+  toggle.setAttribute("aria-label", `${task.completed ? "Mark as not done" : "Complete"}: ${task.text}`);
 
   const content = document.createElement("div");
-  content.className = "task-content";
+  content.className = "task-details";
 
-  const text = document.createElement("span");
-  text.className = "task-text";
+  const text = document.createElement("p");
+  text.className = "task-title";
   text.textContent = task.text;
 
   content.append(text);
 
   const formattedDueDate = formatDueDate(task.dueDate);
   if (formattedDueDate) {
-    const dueDateElement = document.createElement("span");
-    dueDateElement.className = "task-due-date";
+    const dueDateElement = document.createElement("p");
+    dueDateElement.className = "task-date";
     dueDateElement.textContent = `Due ${formattedDueDate}`;
     content.append(dueDateElement);
   }
@@ -234,16 +269,7 @@ function createTaskElement(task) {
   deleteButton.setAttribute("aria-label", `Delete: ${task.text}`);
   deleteButton.textContent = "×";
 
-  item.append(toggleButton, content);
-
-  if (overdue) {
-    const badge = document.createElement("span");
-    badge.className = "task-badge task-badge--overdue";
-    badge.textContent = "Overdue";
-    item.append(badge);
-  }
-
-  item.append(deleteButton);
+  item.append(toggle, content, deleteButton);
   return item;
 }
 
