@@ -10,6 +10,7 @@
   --muted: #9299a5;
   --line: #edf0f3;
   --accent: #6d63e8;
+  --danger: #d65b57;
 }
 
 * {
@@ -155,6 +156,13 @@ h1 span {
   color: #a7adb7;
 }
 
+.due-date-input {
+  flex: 0 0 auto;
+  width: 160px;
+  padding: 0;
+  color: var(--muted);
+}
+
 .add-button {
   flex: 0 0 auto;
   padding: 10px 14px;
@@ -253,6 +261,18 @@ h1 span {
   border-bottom: 0;
 }
 
+.task-item.is-overdue {
+  border-bottom-color: rgba(214, 91, 87, 0.25);
+}
+
+.task-item.is-overdue::before {
+  content: "";
+  width: 3px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--danger);
+}
+
 .task-toggle {
   display: grid;
   width: 20px;
@@ -281,18 +301,50 @@ h1 span {
   height: 11px;
 }
 
-.task-text {
+.task-content {
+  display: flex;
   flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.task-text {
   overflow-wrap: anywhere;
   color: #424956;
   font-size: 13px;
   line-height: 1.5;
 }
 
+.task-due-date {
+  color: #8b93a0;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.task-item.is-overdue .task-due-date {
+  color: var(--danger);
+}
+
 .task-item.is-completed .task-text {
   color: #a4a9b2;
   text-decoration: line-through;
   text-decoration-color: #c4c8ce;
+}
+
+.task-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.task-badge--overdue {
+  background: #fff0ef;
+  color: #b13c38;
 }
 
 .delete-button {
@@ -422,6 +474,7 @@ h1 span {
   }
 
   .add-form {
+    flex-wrap: wrap;
     gap: 9px;
     min-height: 68px;
     padding: 12px 12px 12px 16px;
@@ -429,6 +482,11 @@ h1 span {
 
   .add-form input {
     font-size: 13px;
+  }
+
+  .due-date-input {
+    width: 100%;
+    padding: 10px 0;
   }
 
   .add-button {

@@ -1,6 +1,7 @@
 const STORAGE_KEY = "daylight-todos";
 const taskForm = document.querySelector("#add-form");
 const taskInput = document.querySelector("#task-input");
+const dueDateInput = document.querySelector("#due-date-input");
 const taskList = document.querySelector("#task-list");
 const emptyState = document.querySelector("#empty-state");
 const taskTotal = document.querySelector("#task-total");
@@ -26,13 +27,22 @@ taskForm.addEventListener("submit", (event) => {
     return;
   }
 
-  tasks.unshift({
+  const dueDate = normalizeDueDate(dueDateInput?.value);
+
+  const task = {
     id: createId(),
     text,
     completed: false,
     createdAt: Date.now(),
-  });
+  };
+
+  if (dueDate) {
+    task.dueDate = dueDate;
+  }
+
+  tasks.unshift(task);
   taskInput.value = "";
+  if (dueDateInput) dueDateInput.value = "";
   saveAndRender();
   taskInput.focus();
 });
@@ -74,17 +84,80 @@ function createId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+function normalizeDueDate(input) {
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+
+  const [yearText, monthText, dayText] = trimmed.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+
+  const candidate = new Date(year, month - 1, day);
+  if (candidate.getFullYear() !== year || candidate.getMonth() !== month - 1 || candidate.getDate() !== day) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+function getTodayLocalYmd(now = new Date()) {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isTaskOverdue(task, todayYmd) {
+  if (!task || task.completed) return false;
+  const dueDate = normalizeDueDate(task.dueDate);
+  if (!dueDate) return false;
+  return dueDate < todayYmd;
+}
+
+function formatDueDate(yyyyMmDd) {
+  const dueDate = normalizeDueDate(yyyyMmDd);
+  if (!dueDate) return "";
+  const [year, month, day] = dueDate.split("-");
+  const monthIndex = Number(month) - 1;
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthLabel = months[monthIndex];
+  if (!monthLabel) return "";
+  return `${day} ${monthLabel} ${year}`;
+}
+
 function loadTasks() {
   try {
     const storedTasks = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
     if (!Array.isArray(storedTasks)) return [];
-    return storedTasks.filter(
-      (task) =>
-        task &&
-        typeof task.id === "string" &&
-        typeof task.text === "string" &&
-        typeof task.completed === "boolean",
-    );
+
+    return storedTasks
+      .filter(
+        (task) =>
+          task &&
+          typeof task.id === "string" &&
+          typeof task.text === "string" &&
+          typeof task.completed === "boolean",
+      )
+      .map((task) => {
+        const dueDate = normalizeDueDate(task.dueDate);
+        if (dueDate) {
+          return { ...task, dueDate };
+        }
+
+        if (Object.hasOwn(task, "dueDate")) {
+          const { dueDate: _, ...rest } = task;
+          return rest;
+        }
+
+        return task;
+      });
   } catch (error) {
     console.error("Could not load saved tasks.", error);
     return [];
@@ -121,7 +194,11 @@ function render() {
 
 function createTaskElement(task) {
   const item = document.createElement("li");
-  item.className = `task-item${task.completed ? " is-completed" : ""}`;
+
+  const todayYmd = getTodayLocalYmd();
+  const overdue = isTaskOverdue(task, todayYmd);
+
+  item.className = `task-item${task.completed ? " is-completed" : ""}${overdue ? " is-overdue" : ""}`;
   item.dataset.taskId = task.id;
 
   const toggleButton = document.createElement("button");
@@ -130,11 +207,25 @@ function createTaskElement(task) {
   toggleButton.dataset.action = "toggle";
   toggleButton.setAttribute("aria-label", `${task.completed ? "Mark as not done" : "Complete"}: ${task.text}`);
   toggleButton.setAttribute("aria-pressed", String(task.completed));
-  toggleButton.innerHTML = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m3.5 8 3 3 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  toggleButton.innerHTML =
+    '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m3.5 8 3 3 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  const content = document.createElement("div");
+  content.className = "task-content";
 
   const text = document.createElement("span");
   text.className = "task-text";
   text.textContent = task.text;
+
+  content.append(text);
+
+  const formattedDueDate = formatDueDate(task.dueDate);
+  if (formattedDueDate) {
+    const dueDateElement = document.createElement("span");
+    dueDateElement.className = "task-due-date";
+    dueDateElement.textContent = `Due ${formattedDueDate}`;
+    content.append(dueDateElement);
+  }
 
   const deleteButton = document.createElement("button");
   deleteButton.className = "delete-button";
@@ -143,7 +234,16 @@ function createTaskElement(task) {
   deleteButton.setAttribute("aria-label", `Delete: ${task.text}`);
   deleteButton.textContent = "×";
 
-  item.append(toggleButton, text, deleteButton);
+  item.append(toggleButton, content);
+
+  if (overdue) {
+    const badge = document.createElement("span");
+    badge.className = "task-badge task-badge--overdue";
+    badge.textContent = "Overdue";
+    item.append(badge);
+  }
+
+  item.append(deleteButton);
   return item;
 }
 
