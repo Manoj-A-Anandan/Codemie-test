@@ -60,19 +60,29 @@ filterButtons.forEach((button) => {
 });
 
 taskList.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-action]");
-  if (!button) return;
+  const control = event.target.closest("button[data-action], input[data-action]");
+  if (!control) return;
 
-  const taskItem = button.closest("[data-task-id]");
+  const taskItem = control.closest("[data-task-id]");
   const task = tasks.find((item) => item.id === taskItem?.dataset.taskId);
   if (!task) return;
 
-  if (button.dataset.action === "toggle") {
+  const action = control.dataset.action;
+  if (action === "toggle") {
     task.completed = !task.completed;
-  } else if (button.dataset.action === "delete") {
+  } else if (action === "delete") {
     tasks = tasks.filter((item) => item.id !== task.id);
+  } else {
+    return;
   }
   saveAndRender();
+
+  if (action === "toggle") {
+    // Re-rendering replaces the checkbox; restore focus for keyboard users.
+    const items = taskList.querySelectorAll("[data-task-id]");
+    const nextItem = Array.from(items).find((element) => element.dataset.taskId === task.id);
+    nextItem?.querySelector("input[data-action='toggle']")?.focus();
+  }
 });
 
 clearCompletedButton.addEventListener("click", () => {
@@ -184,7 +194,7 @@ function getEmptyStateContent(filter, totalCount) {
   if (filter === "active") {
     return {
       title: "Nothing to do",
-      copy: "You’re all caught up. Switch to All or Done to review your list.",
+      copy: "You're all caught up. Switch to All or Done to review your list.",
     };
   }
 
@@ -212,7 +222,7 @@ function render() {
 
   taskTotal.textContent = String(tasks.length);
   remainingCount.textContent =
-    remaining === 0 ? "You’re all caught up ✨" : `${remaining} ${remaining === 1 ? "task" : "tasks"} left to do`;
+    remaining === 0 ? "You're all caught up ✨" : `${remaining} ${remaining === 1 ? "task" : "tasks"} left to do`;
   clearCompletedButton.hidden = completed === 0;
 
   const shouldShowEmpty = visibleTasks.length === 0;
@@ -226,13 +236,13 @@ function render() {
     if (copyEl) copyEl.textContent = copy;
   }
 
-  taskList.replaceChildren(...visibleTasks.map(createTaskElement));
+  const todayYmd = getTodayLocalYmd();
+  taskList.replaceChildren(...visibleTasks.map((task) => createTaskElement(task, todayYmd)));
 }
 
-function createTaskElement(task) {
+function createTaskElement(task, todayYmd = getTodayLocalYmd()) {
   const item = document.createElement("li");
 
-  const todayYmd = getTodayLocalYmd();
   const overdue = isTaskOverdue(task, todayYmd);
 
   item.className = `task-item${task.completed ? " is-completed" : ""}${overdue ? " is-overdue" : ""}`;
@@ -258,7 +268,13 @@ function createTaskElement(task) {
   if (formattedDueDate) {
     const dueDateElement = document.createElement("p");
     dueDateElement.className = "task-date";
-    dueDateElement.textContent = `Due ${formattedDueDate}`;
+    if (overdue) {
+      const badge = document.createElement("span");
+      badge.className = "task-badge task-badge--overdue";
+      badge.textContent = "Overdue";
+      dueDateElement.append(badge, " ");
+    }
+    dueDateElement.append(`Due ${formattedDueDate}`);
     content.append(dueDateElement);
   }
 

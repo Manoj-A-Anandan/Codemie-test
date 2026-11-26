@@ -315,6 +315,21 @@ h1 span {
   color: var(--danger);
 }
 
+.task-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.task-badge--overdue {
+  color: #fff;
+  background: var(--danger);
+}
+
 .task-item.is-completed .task-title {
   text-decoration: line-through;
   text-decoration-color: #c4c8ce;
@@ -332,6 +347,7 @@ h1 span {
 }
 
 .task-item:hover .delete-button,
+.task-item:focus-within .delete-button,
 .delete-button:focus-visible {
   opacity: 1;
 }
